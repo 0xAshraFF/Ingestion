@@ -7,7 +7,10 @@ const storePath = resolve(dataDir, "store.json");
 let state = {
   documents: {},
   chunks: {},
-  lessons: []
+  lessons: [],
+  settings: {
+    providers: {}
+  }
 };
 
 export async function loadStore() {
@@ -37,4 +40,17 @@ export async function upsertDocument(document, chunks = []) {
 export async function addLesson(lesson) {
   state.lessons.push(lesson);
   await saveStore();
+}
+
+export async function updateSettings(nextSettings = {}) {
+  state.settings = {
+    ...state.settings,
+    ...nextSettings,
+    providers: {
+      ...(state.settings?.providers || {}),
+      ...(nextSettings.providers || {})
+    }
+  };
+  await saveStore();
+  return state.settings;
 }

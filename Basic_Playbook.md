@@ -55,6 +55,8 @@ Recommended default: `ask_each_job` so the operator controls paid usage.
 
 For the five included handwritten jurisprudence photos, upload the original downloaded JPG filenames or the renamed files in `inputs/handwritten-analytical-positivism/images`. The app will use the curated redacted transcripts and still show low-confidence image quality warnings.
 
+Before uploading arbitrary image scans, open “OCR and BYOK Settings.” If local OCR is missing, click “Install local OCR” and confirm. On macOS this runs `brew install tesseract`. Add Gemini or Claude BYOK keys in the same settings panel if paid fallback is needed.
+
 ## 5. Quality Review Checklist
 
 Before trusting output, verify:
@@ -74,12 +76,13 @@ Before trusting output, verify:
 
 - Check scan rotation.
 - Try image preprocessing.
+- Install local Tesseract OCR from the UI settings panel.
 - Use paid BYOK fallback for failed pages.
 - Manually correct extracted text if needed.
 
 ### Paid model does not run
 
-- Check API key exists server-side.
+- Check API key exists server-side or save it in the UI BYOK settings panel.
 - Check model name.
 - Check fallback mode is not disabled.
 - Check rate limit or billing status.

@@ -34,6 +34,9 @@ export function ingestDocument({ files }) {
     pageTexts.forEach((text, index) => {
       const pageNumber = index + 1;
       const metric = calculateQuality({ text, sourceType, hints: [file.name, file.type] });
+      if (file.ocrProvider) {
+        metric.provider = file.ocrProvider;
+      }
       pages.push({
         id: randomUUID(),
         documentId,

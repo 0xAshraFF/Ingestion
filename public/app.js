@@ -32,6 +32,15 @@ const elements = {
   editButton: document.querySelector("#edit-button"),
   editLog: document.querySelector("#edit-log"),
   providerPanel: document.querySelector("#provider-panel"),
+  providerForm: document.querySelector("#provider-form"),
+  geminiKey: document.querySelector("#gemini-key"),
+  geminiModel: document.querySelector("#gemini-model"),
+  claudeKey: document.querySelector("#claude-key"),
+  claudeModel: document.querySelector("#claude-model"),
+  fallbackMode: document.querySelector("#fallback-mode"),
+  ocrStatus: document.querySelector("#ocr-status"),
+  ocrMessage: document.querySelector("#ocr-message"),
+  installOcrButton: document.querySelector("#install-ocr-button"),
   jsonOutput: document.querySelector("#json-output"),
   artifactPanel: document.querySelector("#artifact-panel"),
   toast: document.querySelector("#toast")
@@ -141,6 +150,41 @@ elements.downloadButton.addEventListener("click", () => {
   notify("ZIP export started.", "success");
 });
 
+elements.installOcrButton.addEventListener("click", async () => {
+  const ok = window.confirm("Install local OCR with Tesseract? On macOS this uses Homebrew: brew install tesseract.");
+  if (!ok) return;
+  setLoading(true, "Installing local OCR");
+  try {
+    const status = await api("/api/ocr/install", { method: "POST" });
+    renderOcrStatus(status);
+    notify(status.available ? "Local OCR is installed." : status.error || "Local OCR install did not complete.", status.available ? "success" : "error");
+  } catch (error) {
+    notify(error.message, "error");
+  } finally {
+    setLoading(false);
+  }
+});
+
+elements.providerForm.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = {
+    GEMINI_API_KEY: elements.geminiKey.value,
+    GEMINI_VISION_MODEL: elements.geminiModel.value,
+    ANTHROPIC_API_KEY: elements.claudeKey.value,
+    CLAUDE_VISION_MODEL: elements.claudeModel.value,
+    PAID_FALLBACK_MODE: elements.fallbackMode.value
+  };
+  try {
+    await api("/api/settings/providers", { method: "PATCH", body: payload });
+    elements.geminiKey.value = "";
+    elements.claudeKey.value = "";
+    notify("BYOK settings saved server-side.", "success");
+    await renderProviders();
+  } catch (error) {
+    notify(error.message, "error");
+  }
+});
+
 elements.editButton.addEventListener("click", async () => {
   if (!state.draft) return;
   const before = elements.editBefore.value.trim();
@@ -159,6 +203,7 @@ elements.editButton.addEventListener("click", async () => {
 });
 
 renderProviders();
+renderOcr();
 
 async function renderQuality() {
   if (!state.document) {
@@ -287,6 +332,7 @@ function notify(message, type = "success") {
 
 async function renderProviders() {
   const settings = await api("/api/settings/providers");
+  elements.fallbackMode.value = settings.fallbackMode || "ask_each_job";
   elements.providerPanel.innerHTML = settings.providers.map((provider) => `
     <div class="provider">
       <span>${provider.name}</span>
@@ -296,18 +342,44 @@ async function renderProviders() {
   `).join("");
 }
 
+async function renderOcr() {
+  const status = await api("/api/ocr/status");
+  renderOcrStatus(status);
+}
+
+function renderOcrStatus(status) {
+  elements.ocrStatus.textContent = status.available ? "Local OCR ready" : "Local OCR missing";
+  elements.ocrMessage.textContent = status.available
+    ? `${status.engine} available: ${status.version}`
+    : status.installCommand
+      ? `Local OCR is not installed. Click install to run: ${status.installCommand.join(" ")}`
+      : "Local OCR is not installed. Install Tesseract manually, then restart the app.";
+  elements.installOcrButton.disabled = status.available || !status.installCommand;
+}
+
 function metric(label, value, className = "") {
   return `<div class="metric"><span>${label}</span><strong class="${className}">${escapeHtml(String(value))}</strong></div>`;
 }
 
 async function readBrowserFile(file) {
   const text = await file.text().catch(() => "");
+  const isImage = /^image\//.test(file.type) || /\.(png|jpe?g|tiff?)$/i.test(file.name);
   return {
     name: file.name,
     type: file.type,
     size: file.size,
-    text
+    text: isImage ? "" : text,
+    base64: isImage ? await readBase64(file) : undefined
   };
+}
+
+function readBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] || "");
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
 }
 
 async function api(path, options = {}) {

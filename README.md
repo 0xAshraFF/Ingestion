@@ -73,6 +73,16 @@ The upload screen accepts drag-and-drop or local file selection. Each file is va
 
 The five included handwritten jurisprudence JPGs use curated redacted transcripts when uploaded by their known filenames, so the demo can show extraction and grounding without native OCR dependencies.
 
+## Local OCR And BYOK From UI
+
+The settings section checks whether local Tesseract OCR is available. If it is missing, the UI asks before installing it locally. On macOS, automatic install uses Homebrew:
+
+```bash
+brew install tesseract
+```
+
+BYOK keys can also be saved from the UI before ingestion. Keys are stored server-side in the ignored `data/store.json` runtime file and only redacted status is returned to the browser.
+
 ## Notes
 
 - BYOK keys stay server-side in `.env`.

@@ -10,6 +10,7 @@ const required = [
   "src/lib/drafts.js",
   "src/lib/editLearning.js",
   "src/lib/exportBundle.js",
+  "src/lib/localOcr.js",
   "public/index.html",
   "public/app.js",
   "public/styles.css"
