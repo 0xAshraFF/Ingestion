@@ -15,6 +15,7 @@ DOCS = ROOT / "documents"
 TEXT = ROOT / "text"
 DOCS.mkdir(parents=True, exist_ok=True)
 TEXT.mkdir(parents=True, exist_ok=True)
+random.seed(42)
 
 
 CLEAR_NOTICE_TEXT = """\

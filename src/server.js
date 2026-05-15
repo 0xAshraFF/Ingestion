@@ -8,6 +8,8 @@ import { captureEdit } from "./lib/editLearning.js";
 import { providerSettings, runPaidFallback } from "./lib/providers.js";
 import { addLesson, getStore, loadStore, upsertDocument } from "./lib/store.js";
 import { aggregateQuality } from "./lib/quality.js";
+import { buildDocumentResult, buildResultZip } from "./lib/exportBundle.js";
+import { spawn } from "node:child_process";
 
 const root = resolve(".");
 const publicDir = resolve("public");
@@ -30,7 +32,11 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`Local-first ingestion app running at http://${host}:${port}`);
+  const url = `http://${host}:${port}`;
+  console.log(`Local-first ingestion app running at ${url}`);
+  if (process.argv.includes("--open")) {
+    openBrowser(url);
+  }
 });
 
 async function routeApi(request, response, url) {
@@ -54,7 +60,8 @@ async function routeApi(request, response, url) {
     sendJson(response, 201, {
       document,
       fields: extractStructuredFields(document),
-      chunks
+      chunks,
+      result: buildDocumentResult({ document, chunks })
     });
     return;
   }
@@ -70,7 +77,10 @@ async function routeApi(request, response, url) {
     const chunks = getStore().chunks[document.id] || [];
     const draft = generateDraft({ document, chunks, type: body.type, lessons: getStore().lessons });
     await upsertDocument(document, chunks);
-    sendJson(response, 201, draft);
+    sendJson(response, 201, {
+      draft,
+      result: buildDocumentResult({ document, chunks })
+    });
     return;
   }
 
@@ -112,6 +122,28 @@ async function routeDocumentApi(request, response, parts) {
       citationCoverage: latestDraft?.citations?.length ? 1 : 0,
       editDelta: document.edits?.length || 0
     });
+    return;
+  }
+
+  if (request.method === "GET" && action === "result") {
+    sendJson(response, 200, buildDocumentResult({
+      document,
+      chunks: getStore().chunks[document.id] || []
+    }));
+    return;
+  }
+
+  if (request.method === "GET" && action === "export.zip") {
+    const zip = buildResultZip(buildDocumentResult({
+      document,
+      chunks: getStore().chunks[document.id] || []
+    }));
+    response.writeHead(200, {
+      "content-type": "application/zip",
+      "content-disposition": `attachment; filename="${safeFilename(document.title || document.id)}-results.zip"`,
+      "content-length": zip.length
+    });
+    response.end(zip);
     return;
   }
 
@@ -190,6 +222,22 @@ async function readJson(request) {
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, { "content-type": "application/json; charset=utf-8" });
   response.end(JSON.stringify(payload, null, 2));
+}
+
+function safeFilename(value) {
+  return String(value).toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "document";
+}
+
+function openBrowser(url) {
+  const command = process.platform === "darwin"
+    ? "open"
+    : process.platform === "win32"
+      ? "cmd"
+      : "xdg-open";
+  const args = process.platform === "win32" ? ["/c", "start", "", url] : [url];
+  const child = spawn(command, args, { detached: true, stdio: "ignore" });
+  child.on("error", () => {});
+  child.unref();
 }
 
 function requireDocument(id) {

@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "ingestion": "node src/server.js --open",
     "dev": "node src/server.js",
     "start": "node src/server.js",
     "test": "node --test",

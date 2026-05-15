@@ -1,13 +1,22 @@
 const state = {
   document: null,
   fields: null,
-  draft: null
+  draft: null,
+  result: null,
+  selectedFiles: []
 };
+
+const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+const ALLOWED_EXTENSIONS = new Set(["pdf", "png", "jpg", "jpeg", "tif", "tiff", "docx", "txt", "md"]);
 
 const elements = {
   uploadForm: document.querySelector("#upload-form"),
   fileInput: document.querySelector("#file-input"),
   fileList: document.querySelector("#file-list"),
+  chooseButton: document.querySelector("#choose-button"),
+  uploadButton: document.querySelector("#upload-button"),
+  validationPanel: document.querySelector("#validation-panel"),
+  loader: document.querySelector("#loader"),
   statusPill: document.querySelector("#status-pill"),
   qualityGrid: document.querySelector("#quality-grid"),
   pageQuality: document.querySelector("#page-quality"),
@@ -16,37 +25,70 @@ const elements = {
   fallbackButton: document.querySelector("#fallback-button"),
   draftType: document.querySelector("#draft-type"),
   draftButton: document.querySelector("#draft-button"),
+  downloadButton: document.querySelector("#download-button"),
   draftOutput: document.querySelector("#draft-output"),
   editBefore: document.querySelector("#edit-before"),
   editAfter: document.querySelector("#edit-after"),
   editButton: document.querySelector("#edit-button"),
   editLog: document.querySelector("#edit-log"),
-  providerPanel: document.querySelector("#provider-panel")
+  providerPanel: document.querySelector("#provider-panel"),
+  jsonOutput: document.querySelector("#json-output"),
+  artifactPanel: document.querySelector("#artifact-panel"),
+  toast: document.querySelector("#toast")
 };
 
+elements.chooseButton.addEventListener("click", () => elements.fileInput.click());
+
 elements.fileInput.addEventListener("change", () => {
-  const files = [...elements.fileInput.files];
-  elements.fileList.textContent = files.length ? files.map((file) => file.name).join(", ") : "No files selected";
+  setSelectedFiles([...elements.fileInput.files]);
+});
+
+const dropZone = document.querySelector(".drop-zone");
+dropZone.addEventListener("dragover", (event) => {
+  event.preventDefault();
+  dropZone.classList.add("is-dragging");
+});
+dropZone.addEventListener("dragleave", () => dropZone.classList.remove("is-dragging"));
+dropZone.addEventListener("drop", (event) => {
+  event.preventDefault();
+  dropZone.classList.remove("is-dragging");
+  setSelectedFiles([...event.dataTransfer.files]);
 });
 
 elements.uploadForm.addEventListener("submit", async (event) => {
   event.preventDefault();
-  const files = [...elements.fileInput.files];
-  if (files.length === 0) return;
+  const files = state.selectedFiles;
+  const errors = validateFiles(files);
+  renderValidation(errors);
+  if (errors.length > 0) {
+    notify("Fix upload validation errors before running ingestion.", "error");
+    return;
+  }
 
-  setStatus("Reading files locally");
-  const payloadFiles = await Promise.all(files.map(readBrowserFile));
-  const result = await api("/api/documents/upload", { method: "POST", body: { files: payloadFiles } });
+  setLoading(true, "Reading files locally");
+  try {
+    const payloadFiles = await Promise.all(files.map(readBrowserFile));
+    const result = await api("/api/documents/upload", { method: "POST", body: { files: payloadFiles } });
 
-  state.document = result.document;
-  state.fields = result.fields;
-  state.draft = null;
+    state.document = result.document;
+    state.fields = result.fields;
+    state.draft = null;
+    state.result = result.result;
 
-  setStatus("Local intake complete");
-  elements.draftButton.disabled = false;
-  elements.fallbackButton.disabled = !state.document.pages.some((page) => page.status === "local_low_confidence");
-  renderDocument(result.document, result.fields);
-  await renderQuality();
+    setStatus("Local intake complete");
+    notify("Upload finished. Extraction and quality metrics are ready.", "success");
+    elements.draftButton.disabled = false;
+    elements.downloadButton.disabled = false;
+    elements.fallbackButton.disabled = !state.document.pages.some((page) => page.status === "local_low_confidence");
+    renderDocument(result.document, result.fields);
+    renderResult(result.result);
+    await renderQuality();
+  } catch (error) {
+    notify(error.message, "error");
+    setStatus("Upload failed");
+  } finally {
+    setLoading(false);
+  }
 });
 
 elements.fallbackButton.addEventListener("click", async () => {
@@ -60,25 +102,43 @@ elements.fallbackButton.addEventListener("click", async () => {
     state.document = result.document;
     elements.fallbackButton.disabled = true;
     setStatus("Fallback complete");
+    notify("Fallback completed and metrics were refreshed.", "success");
     renderDocument(state.document, state.fields);
-    await renderQuality();
+    await refreshResult();
   } catch (error) {
     setStatus(error.message);
+    notify(error.message, "error");
   }
 });
 
 elements.draftButton.addEventListener("click", async () => {
   if (!state.document) return;
-  setStatus("Generating grounded draft");
-  const draft = await api("/api/drafts", {
-    method: "POST",
-    body: { documentId: state.document.id, type: elements.draftType.value }
-  });
-  state.draft = draft;
-  elements.draftOutput.value = draft.content;
-  elements.editButton.disabled = false;
-  setStatus("Draft ready");
-  await renderQuality();
+  setLoading(true, "Generating grounded draft");
+  try {
+    const payload = await api("/api/drafts", {
+      method: "POST",
+      body: { documentId: state.document.id, type: elements.draftType.value }
+    });
+    state.draft = payload.draft;
+    state.result = payload.result;
+    elements.draftOutput.value = payload.draft.content;
+    elements.editButton.disabled = false;
+    elements.downloadButton.disabled = false;
+    renderResult(payload.result);
+    setStatus("Draft ready");
+    notify("Draft generated. JSON, metrics, and ZIP export are ready.", "success");
+    await renderQuality();
+  } catch (error) {
+    notify(error.message, "error");
+  } finally {
+    setLoading(false);
+  }
+});
+
+elements.downloadButton.addEventListener("click", () => {
+  if (!state.document) return;
+  window.location.href = `/api/documents/${state.document.id}/export.zip`;
+  notify("ZIP export started.", "success");
 });
 
 elements.editButton.addEventListener("click", async () => {
@@ -94,7 +154,8 @@ elements.editButton.addEventListener("click", async () => {
   elements.editLog.textContent = `Captured ${event.editType} lesson: ${event.reusableLesson}`;
   elements.editBefore.value = "";
   elements.editAfter.value = "";
-  await renderQuality();
+  notify("Reviewer edit lesson captured.", "success");
+  await refreshResult();
 });
 
 renderProviders();
@@ -143,6 +204,13 @@ async function renderQuality() {
     </table>`;
 }
 
+async function refreshResult() {
+  if (!state.document) return;
+  state.result = await api(`/api/documents/${state.document.id}/result`);
+  renderResult(state.result);
+  await renderQuality();
+}
+
 function renderDocument(documentData, fields) {
   const fieldRows = Object.entries(fields).map(([key, value]) => {
     const text = Array.isArray(value) ? value.join(", ") || "Not found" : value || "Not found";
@@ -152,6 +220,69 @@ function renderDocument(documentData, fields) {
   elements.pageText.textContent = documentData.pages
     .map((page) => `${page.sourceFile} page ${page.page}\n${page.text}`)
     .join("\n\n");
+}
+
+function renderResult(result) {
+  if (!result) {
+    elements.jsonOutput.textContent = "{}";
+    return;
+  }
+  elements.jsonOutput.textContent = JSON.stringify(result, null, 2);
+  elements.artifactPanel.innerHTML = `
+    <div class="field-item"><span>JSON</span><strong>result.json</strong></div>
+    <div class="field-item"><span>Markdown</span><strong>result.md</strong></div>
+    <div class="field-item"><span>Metrics</span><strong>metrics.csv</strong></div>
+    <div class="field-item"><span>Draft</span><strong>draft.md</strong></div>
+  `;
+}
+
+function setSelectedFiles(files) {
+  state.selectedFiles = files;
+  elements.fileList.textContent = files.length
+    ? files.map((file) => `${file.name} (${formatBytes(file.size)})`).join(", ")
+    : "PDF, image, DOCX, TXT, or MD. Max 10 MB per file.";
+  renderValidation(validateFiles(files));
+}
+
+function validateFiles(files) {
+  const errors = [];
+  if (files.length === 0) {
+    errors.push("Choose at least one file.");
+  }
+  for (const file of files) {
+    const extension = file.name.toLowerCase().split(".").pop();
+    if (!ALLOWED_EXTENSIONS.has(extension)) {
+      errors.push(`${file.name}: unsupported file type.`);
+    }
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      errors.push(`${file.name}: exceeds 10 MB.`);
+    }
+  }
+  return errors;
+}
+
+function renderValidation(errors) {
+  elements.validationPanel.innerHTML = errors.length
+    ? errors.map((error) => `<div>${escapeHtml(error)}</div>`).join("")
+    : state.selectedFiles.length
+      ? "<div>Validation passed.</div>"
+      : "";
+}
+
+function setLoading(isLoading, message = "Processing") {
+  elements.loader.classList.toggle("hidden", !isLoading);
+  elements.uploadButton.disabled = isLoading;
+  elements.draftButton.disabled = isLoading || !state.document;
+  elements.loader.querySelector("span:last-child").textContent = `${message}...`;
+  if (isLoading) setStatus(message);
+}
+
+function notify(message, type = "success") {
+  elements.toast.textContent = message;
+  elements.toast.className = `toast ${type}`;
+  window.setTimeout(() => {
+    elements.toast.classList.add("hidden");
+  }, 4200);
 }
 
 async function renderProviders() {
@@ -192,6 +323,11 @@ async function api(path, options = {}) {
 
 function setStatus(value) {
   elements.statusPill.textContent = value;
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${Math.round((bytes / 1024 / 1024) * 10) / 10} MB`;
 }
 
 function labelFor(key) {

@@ -12,7 +12,7 @@ Expected setup after implementation:
 cp .env.example .env
 # Fill optional BYOK keys only if paid fallback is needed.
 npm install
-npm run dev
+npm run ingestion
 ```
 
 Optional local model setup:
@@ -40,17 +40,18 @@ Recommended default: `ask_each_job` so the operator controls paid usage.
 ## 4. Demo Script
 
 1. Open app.
-2. Upload a clear PDF and a noisy scan.
-3. Choose “Case Fact Summary.”
-4. Watch local OCR processing complete.
-5. Open the quality dashboard.
-6. Show green/amber/red page quality.
-7. Trigger paid fallback for the low-confidence page.
-8. Generate grounded draft.
-9. Click citations to inspect evidence.
-10. Edit one paragraph.
-11. Show edit lesson captured.
-12. Regenerate or start a second draft using the improvement lesson.
+2. Drag a clear PDF, noisy scan, or handwritten note onto the upload area, or click “Upload from computer.”
+3. Confirm validation passes. Files larger than 10 MB or unsupported extensions should be rejected.
+4. Click “Run ingestion” and show the loader while processing runs.
+5. Confirm the completion notification appears.
+6. Open the quality dashboard and show green/amber/red page quality.
+7. Choose “Case Fact Summary” and generate the grounded draft.
+8. Show the database-ready JSON result panel.
+9. Show the Markdown-style draft output and citation metadata.
+10. Click “Download ZIP” and verify it contains `result.json`, `result.md`, `draft.md`, and `metrics.csv`.
+11. Edit one paragraph.
+12. Show edit lesson captured.
+13. Regenerate or start a second draft using the improvement lesson.
 
 ## 5. Quality Review Checklist
 
@@ -62,6 +63,8 @@ Before trusting output, verify:
 - Unsupported claims are listed separately.
 - Paid fallback usage is visible.
 - The draft includes missing information and reviewer warnings.
+- JSON result payload is available for database ingestion.
+- ZIP export includes JSON, Markdown, draft text, and CSV metrics.
 
 ## 6. Troubleshooting
 
@@ -98,6 +101,13 @@ Before trusting output, verify:
 - Confirm reusable lessons are being applied to the selected draft template.
 - Review edit classification labels.
 
+### Download ZIP does not start
+
+- Confirm at least one document has been uploaded.
+- Generate a draft if the reviewer expects `draft.md` to contain final draft text.
+- Check the browser did not block downloads.
+- Use `GET /api/documents/:id/export.zip` directly for API verification.
+
 ## 7. Release Checklist
 
 - All tests pass.
@@ -107,4 +117,7 @@ Before trusting output, verify:
 - Demo data can be deleted.
 - Fallback provider logs redact keys.
 - Quality dashboard shows OCR accuracy clearly.
+- Upload validation rejects oversized files.
+- Loader and completion notification appear during upload/draft generation.
+- Downloaded ZIP opens and contains JSON, Markdown, draft, and metrics CSV.
 - Journal and spec files are included.

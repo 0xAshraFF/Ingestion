@@ -260,6 +260,8 @@ POST /api/documents/upload
 GET  /api/documents/:id/status
 GET  /api/documents/:id/extractions
 GET  /api/documents/:id/quality
+GET  /api/documents/:id/result
+GET  /api/documents/:id/export.zip
 POST /api/documents/:id/fallback
 POST /api/drafts
 GET  /api/drafts/:id
@@ -274,6 +276,8 @@ PATCH /api/settings/providers
 Pages:
 
 - Upload page.
+- Drag-and-drop upload target.
+- Upload-from-computer control.
 - Processing status page.
 - Extraction review page with low-confidence highlights.
 - Quality dashboard.
@@ -289,6 +293,15 @@ Quality dashboard must show:
 - Unsupported claim count.
 - Citation coverage.
 - Edit delta after review.
+
+Upload UI must:
+
+- Validate supported file extensions before ingestion.
+- Reject files larger than 10 MB.
+- Show a loader during upload and draft generation.
+- Notify the user when ingestion or draft generation completes.
+- Show a JSON result payload suitable for later database ingestion.
+- Provide a ZIP export containing `result.json`, `result.md`, `draft.md`, and `metrics.csv`.
 
 ## 15. Error Handling
 
@@ -313,11 +326,13 @@ Quality dashboard must show:
 ### Unit Tests
 
 - File type validation.
+- Maximum file-size validation.
 - OCR confidence calculation.
 - Provider fallback selection.
 - JSON schema validation.
 - Citation format validation.
 - Edit event classification.
+- Export bundle generation.
 
 ### Integration Tests
 
@@ -343,6 +358,10 @@ The project is complete when:
 - The user can see OCR quality and accuracy warnings.
 - Low-quality pages can be sent to Gemini or Claude with BYOK keys.
 - Generated drafts include citations and unsupported claim warnings.
+- The UI supports drag/drop and upload-from-computer workflows.
+- The UI shows loader and completion notifications.
+- The UI shows JSON results and metrics tables.
+- The user can download a ZIP containing JSON, Markdown, draft text, and CSV metrics.
 - User edits are captured and summarized into reusable improvements.
 - All tests pass locally.
 - README, spec, playbook, and journal are included.

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ingestDocument, extractStructuredFields } from "../src/lib/intake.js";
+import { ingestDocument, extractStructuredFields, MAX_FILE_SIZE_BYTES } from "../src/lib/intake.js";
 
 test("ingests text files into local-pass pages with extracted fields", () => {
   const document = ingestDocument({
@@ -45,4 +45,10 @@ test("rejects unsupported file types", () => {
   assert.throws(() => ingestDocument({
     files: [{ name: "archive.zip", type: "application/zip", size: 9, text: "" }]
   }), /Unsupported file type/);
+});
+
+test("rejects files larger than the configured upload limit", () => {
+  assert.throws(() => ingestDocument({
+    files: [{ name: "large.pdf", type: "application/pdf", size: MAX_FILE_SIZE_BYTES + 1, text: "large" }]
+  }), /File is too large/);
 });
