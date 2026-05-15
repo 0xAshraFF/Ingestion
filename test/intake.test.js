@@ -41,6 +41,22 @@ test("flags noisy image uploads as low confidence", () => {
   assert.equal(document.pages[0].metric.qualityBand, "red");
 });
 
+test("uses curated transcript for known handwritten sample images", () => {
+  const document = ingestDocument({
+    files: [
+      {
+        name: "485159338_1065509308950484_7667962008053286287_n.jpg",
+        type: "image/jpeg",
+        size: 1024,
+        text: ""
+      }
+    ]
+  });
+
+  assert.match(document.pages[0].text, /Bentham/);
+  assert.match(document.pages[0].text, /utilitarianism/i);
+});
+
 test("rejects unsupported file types", () => {
   assert.throws(() => ingestDocument({
     files: [{ name: "archive.zip", type: "application/zip", size: 9, text: "" }]

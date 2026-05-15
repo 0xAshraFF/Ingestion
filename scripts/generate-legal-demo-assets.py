@@ -153,10 +153,14 @@ def extract_pdf_text(path: Path):
         return ""
 
 
-make_pdf(DOCS / "clear_notice.pdf", "Synthetic Past Due Rent Notice", CLEAR_NOTICE_TEXT)
-make_pdf(DOCS / "debt_collection_letter.pdf", "Synthetic Debt Collection Response Letter", DEBT_COLLECTION_TEXT)
-make_noisy_scan(DOCS / "noisy_scan_notice.jpg", CLEAR_NOTICE_TEXT)
-make_handwritten_note(DOCS / "handwritten_operator_note.jpg", HANDWRITTEN_NOTE_TEXT)
+if not (DOCS / "clear_notice.pdf").exists():
+    make_pdf(DOCS / "clear_notice.pdf", "Synthetic Past Due Rent Notice", CLEAR_NOTICE_TEXT)
+if not (DOCS / "debt_collection_letter.pdf").exists():
+    make_pdf(DOCS / "debt_collection_letter.pdf", "Synthetic Debt Collection Response Letter", DEBT_COLLECTION_TEXT)
+if not (DOCS / "noisy_scan_notice.jpg").exists():
+    make_noisy_scan(DOCS / "noisy_scan_notice.jpg", CLEAR_NOTICE_TEXT)
+if not (DOCS / "handwritten_operator_note.jpg").exists():
+    make_handwritten_note(DOCS / "handwritten_operator_note.jpg", HANDWRITTEN_NOTE_TEXT)
 
 (TEXT / "clear_notice.txt").write_text(CLEAR_NOTICE_TEXT, encoding="utf-8")
 (TEXT / "debt_collection_letter.txt").write_text(DEBT_COLLECTION_TEXT, encoding="utf-8")

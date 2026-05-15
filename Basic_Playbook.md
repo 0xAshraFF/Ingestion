@@ -53,6 +53,8 @@ Recommended default: `ask_each_job` so the operator controls paid usage.
 12. Show edit lesson captured.
 13. Regenerate or start a second draft using the improvement lesson.
 
+For the five included handwritten jurisprudence photos, upload the original downloaded JPG filenames or the renamed files in `inputs/handwritten-analytical-positivism/images`. The app will use the curated redacted transcripts and still show low-confidence image quality warnings.
+
 ## 5. Quality Review Checklist
 
 Before trusting output, verify:

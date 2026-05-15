@@ -71,6 +71,8 @@ The upload screen accepts drag-and-drop or local file selection. Each file is va
 - OCR/model confidence metrics,
 - a ZIP download containing `result.json`, `result.md`, `draft.md`, and `metrics.csv`.
 
+The five included handwritten jurisprudence JPGs use curated redacted transcripts when uploaded by their known filenames, so the demo can show extraction and grounding without native OCR dependencies.
+
 ## Notes
 
 - BYOK keys stay server-side in `.env`.
