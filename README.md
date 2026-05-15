@@ -2,6 +2,8 @@
 
 Runnable MVP for messy document intake, local quality review, grounded drafting, BYOK fallback boundaries, and reviewer edit learning. Everything runs on `localhost`; no cloud calls happen unless you explicitly add a BYOK key.
 
+> **Reviewing this submission?** Read [`docs/SUBMISSION_NOTES.md`](docs/SUBMISSION_NOTES.md) first — it answers the three questions reviewers typically ask: is the BYOK key safe, is this a RAG / did you train a model, and how would you scale it.
+
 ## Quickstart (60 seconds, zero install required)
 
 Requires Node 20+. From the repo root:
