@@ -31,34 +31,38 @@ This implementation uses only Node built-ins, so `npm install` is currently a no
 npm run dev
 npm run build
 npm test
+npm run results
 npm run samples
 ```
 
-## Sample Documents
+## Inputs And Results
 
-The `samples` folder contains two demo packs:
+The `inputs` folder contains two demo input packs:
 
-- `samples/legal-demo`: clear notice PDF, noisy scan JPG, handwritten operator note JPG, debt collection letter PDF, civil summons PDF, expected case fact summary, and model/confidence results.
-- `samples/handwritten-analytical-positivism`: handwritten JPG pages, redacted manual OCR transcripts, expected study-note summary, and evaluation report.
+- `inputs/legal-demo`: clear notice PDF, noisy scan JPG, handwritten operator note JPG, debt collection letter PDF, civil summons PDF, plus OCR/source text used for deterministic local runs.
+- `inputs/handwritten-analytical-positivism`: handwritten JPG pages and redacted manual OCR transcripts.
 
 Run:
 
 ```bash
-npm run samples
+npm run results
 ```
 
-That command builds grounded drafts from both sample packs and writes:
+That command builds grounded drafts from both input packs and writes actual outputs under `results`:
 
-- `samples/legal-demo/outputs/expected_output_case_fact_summary.md`
-- `samples/legal-demo/outputs/model-confidence-results.csv`
-- `samples/legal-demo/outputs/evaluation-report.md`
-- `samples/handwritten-analytical-positivism/outputs/generated-study-note-summary.md`
-- `samples/handwritten-analytical-positivism/outputs/evaluation-report.md`
-- `samples/results/sample-model-confidence.md`
-- `samples/results/sample-model-confidence.csv`
+- `results/legal-demo/actual_case_fact_summary.md`
+- `results/legal-demo/model-confidence-results.csv`
+- `results/legal-demo/evaluation-report.md`
+- `results/handwritten-analytical-positivism/actual-study-note-summary.md`
+- `results/handwritten-analytical-positivism/evaluation-report.md`
+- `results/model-confidence.md`
+- `results/model-confidence.csv`
+
+The source inputs stay separate from generated results so reviewers can inspect the document-understanding path clearly.
 
 ## Notes
 
 - BYOK keys stay server-side in `.env`.
 - The app blocks paid fallback if no matching BYOK key is configured.
 - Uploaded/demo data is stored under `data/store.json`, which is ignored by git.
+- Local secret files are ignored by git. See `env/README.md` and `docs/GUARDRAILS.md`.

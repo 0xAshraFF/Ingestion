@@ -1,8 +1,8 @@
-# Sample Results
+# Actual Results
 
 ## Legal Demo Model Metrics
 
-| sample doc | model used | confidence metric | accuracy proxy | quality band | fallback used |
+| input doc | model used | confidence metric | accuracy proxy | quality band | fallback used |
 |---|---:|---:|---:|---:|---:|
 | clear_notice.pdf | local_pdf_text_extractor | 87% | 87% | amber | no |
 | noisy_scan_notice.jpg | local_ocr_heuristic | 52% | 52% | red | no |

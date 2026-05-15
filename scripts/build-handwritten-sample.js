@@ -1,15 +1,17 @@
-import { readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ingestDocument } from "../src/lib/intake.js";
 import { chunkDocument } from "../src/lib/retrieval.js";
 import { generateDraft } from "../src/lib/drafts.js";
 import { aggregateQuality } from "../src/lib/quality.js";
 
-const sampleDir = "samples/handwritten-analytical-positivism";
-const manifest = JSON.parse(await readFile(join(sampleDir, "manifest.json"), "utf8"));
+const inputDir = "inputs/handwritten-analytical-positivism";
+const resultDir = "results/handwritten-analytical-positivism";
+await mkdir(resultDir, { recursive: true });
+const manifest = JSON.parse(await readFile(join(inputDir, "manifest.json"), "utf8"));
 
 const files = await Promise.all(manifest.pages.map(async (page) => {
-  const transcript = await readFile(join(sampleDir, page.transcript), "utf8");
+  const transcript = await readFile(join(inputDir, page.transcript), "utf8");
   return {
     name: page.image,
     type: "image/jpeg",
@@ -53,15 +55,15 @@ ${manifest.pages.map((page) => `- Page ${page.page}: ${page.image} - ${page.topi
 ${draft.content}
 `;
 
-await writeFile(join(sampleDir, "outputs/generated-study-note-summary.md"), draft.content);
-await writeFile(join(sampleDir, "outputs/evaluation-report.md"), report);
+await writeFile(join(resultDir, "actual-study-note-summary.md"), draft.content);
+await writeFile(join(resultDir, "evaluation-report.md"), report);
 
 console.log(JSON.stringify({
-  sample: manifest.name,
+  run: manifest.name,
   qualityBand: quality.band,
   averageConfidence: quality.averageConfidence,
   pages: document.pages.length,
   citations: draft.citations.length,
-  generated: `${sampleDir}/outputs/generated-study-note-summary.md`,
-  report: `${sampleDir}/outputs/evaluation-report.md`
+  generated: `${resultDir}/actual-study-note-summary.md`,
+  report: `${resultDir}/evaluation-report.md`
 }, null, 2));
