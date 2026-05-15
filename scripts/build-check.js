@@ -3,6 +3,7 @@ import { access } from "node:fs/promises";
 const required = [
   "src/server.js",
   "src/lib/intake.js",
+  "src/lib/sampleTranscripts.js",
   "src/lib/quality.js",
   "src/lib/providers.js",
   "src/lib/retrieval.js",

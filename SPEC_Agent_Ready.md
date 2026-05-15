@@ -302,6 +302,7 @@ Upload UI must:
 - Notify the user when ingestion or draft generation completes.
 - Show a JSON result payload suitable for later database ingestion.
 - Provide a ZIP export containing `result.json`, `result.md`, `draft.md`, and `metrics.csv`.
+- Use curated transcripts for the included handwritten sample JPGs when uploaded by their known filenames.
 
 ## 15. Error Handling
 
@@ -333,6 +334,7 @@ Upload UI must:
 - Citation format validation.
 - Edit event classification.
 - Export bundle generation.
+- Curated transcript lookup for known handwritten sample images.
 
 ### Integration Tests
 

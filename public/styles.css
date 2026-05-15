@@ -251,6 +251,8 @@ main {
   display: block;
   font-size: 22px;
   margin-top: 5px;
+  overflow-wrap: anywhere;
+  line-height: 1.22;
 }
 
 .table-wrap {
@@ -291,7 +293,7 @@ th {
 
 .split-band {
   display: grid;
-  grid-template-columns: minmax(240px, 0.8fr) minmax(0, 1.2fr);
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
   gap: 24px;
 }
 
@@ -316,6 +318,7 @@ th {
   border-radius: 8px;
   padding: 14px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 
 .json-output {

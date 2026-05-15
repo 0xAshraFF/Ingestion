@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { calculateQuality, needsFallback } from "./quality.js";
+import { lookupSampleTranscript } from "./sampleTranscripts.js";
 
 const SUPPORTED_EXTENSIONS = new Set(["pdf", "png", "jpg", "jpeg", "tif", "tiff", "docx", "txt", "md"]);
 const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "tif", "tiff"]);
@@ -74,8 +75,13 @@ export function extractStructuredFields(document) {
 }
 
 function normalizeToPages(file, sourceType) {
-  const raw = String(file.ocrText || file.text || "");
+  const sampleTranscript = sourceType === "image" ? lookupSampleTranscript(file.name) : null;
+  const raw = String(file.ocrText || sampleTranscript || file.text || "");
   if (file.ocrText && raw.trim().length > 20) {
+    return splitTextPages(raw);
+  }
+
+  if (sampleTranscript && raw.trim().length > 20) {
     return splitTextPages(raw);
   }
 

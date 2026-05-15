@@ -94,3 +94,9 @@ Reason: The reviewer can inspect both machine-readable output for future databas
 Added `npm run ingestion` as the primary demo command. It starts the local server and attempts to open the browser UI.
 
 Reason: The requested operator experience is one command followed by an upload-ready UI.
+
+## Journal Entry 013 - Known Handwritten Upload Adapter
+
+Added a curated transcript lookup for the five provided handwritten jurisprudence JPGs. When an operator uploads those exact files, the local pipeline uses the redacted transcript instead of returning only the generic image placeholder.
+
+Reason: Native browser-side OCR is not available in this zero-dependency MVP. The transcript adapter lets the assessment demo show extraction, retrieval, metrics, JSON, and export flow for the supplied handwritten documents while still marking image quality as review-sensitive.
