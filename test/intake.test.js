@@ -24,7 +24,7 @@ test("ingests text files into local-pass pages with extracted fields", () => {
   assert.ok(fields.parties.some((party) => party.includes("Jane Rivera")));
 });
 
-test("flags noisy image uploads as low confidence", () => {
+test("flags image uploads with no OCR engine and no curated transcript as ocr_unavailable", () => {
   const document = ingestDocument({
     files: [
       {
@@ -37,8 +37,29 @@ test("flags noisy image uploads as low confidence", () => {
   });
 
   assert.equal(document.pages.length, 1);
+  assert.equal(document.pages[0].status, "ocr_unavailable");
+  assert.equal(document.pages[0].metric.ocrAvailable, false);
+  assert.equal(document.pages[0].metric.qualityBand, "red");
+});
+
+test("flags noisy Tesseract OCR output as low confidence", () => {
+  const document = ingestDocument({
+    files: [
+      {
+        name: "noisy_handwritten_scan.jpg",
+        type: "image/jpeg",
+        size: 1024,
+        text: "",
+        ocrText: "blurry handwritten letters partially recognized by tesseract producing low confidence",
+        ocrProvider: "local_tesseract_ocr"
+      }
+    ]
+  });
+
+  assert.equal(document.pages.length, 1);
   assert.equal(document.pages[0].status, "local_low_confidence");
   assert.equal(document.pages[0].metric.qualityBand, "red");
+  assert.equal(document.pages[0].metric.provider, "local_tesseract_ocr");
 });
 
 test("uses curated transcript for known handwritten sample images", () => {

@@ -213,9 +213,10 @@ async function renderQuality() {
   }
 
   const quality = await api(`/api/documents/${state.document.id}/quality`);
+  const unavailable = quality.ocrUnavailableCount || 0;
   elements.qualityGrid.innerHTML = [
     metric("Overall band", quality.band, `quality-${quality.band}`),
-    metric("Average confidence", `${quality.averageConfidence}%`),
+    metric("Average confidence", unavailable && !quality.averageConfidence ? "OCR not installed" : `${quality.averageConfidence}%`),
     metric("Fallback pages", quality.fallbackPageCount || 0),
     metric("Citation coverage", quality.citationCoverage ? "Ready" : "Pending"),
     metric("Unsupported claims", quality.unsupportedClaimCount || 0),
@@ -240,8 +241,8 @@ async function renderQuality() {
             <td>${escapeHtml(page.sourceFile)}</td>
             <td>${page.page}</td>
             <td class="quality-${page.qualityBand}">${page.qualityBand}</td>
-            <td>${page.ocrConfidence}%</td>
-            <td>${Math.round(page.pageCoverage * 100)}%</td>
+            <td>${page.ocrAvailable === false ? "OCR not installed" : `${page.ocrConfidence}%`}</td>
+            <td>${page.ocrAvailable === false ? "—" : `${Math.round(page.pageCoverage * 100)}%`}</td>
             <td>${page.fallbackUsed ? page.provider || "yes" : "no"}</td>
           </tr>
         `).join("")}
@@ -263,7 +264,12 @@ function renderDocument(documentData, fields) {
   });
   elements.fieldPanel.innerHTML = fieldRows.join("");
   elements.pageText.textContent = documentData.pages
-    .map((page) => `${page.sourceFile} page ${page.page}\n${page.text}`)
+    .map((page) => {
+      if (page.status === "ocr_unavailable") {
+        return `${page.sourceFile} page ${page.page}\nLocal OCR not installed. Install Tesseract from Step 5, or upload one of the sample inputs from inputs/ (which ship with curated transcripts).`;
+      }
+      return `${page.sourceFile} page ${page.page}\n${page.text}`;
+    })
     .join("\n\n");
 }
 

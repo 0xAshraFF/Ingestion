@@ -51,7 +51,10 @@ export function aggregateQuality(metrics) {
     return { band: "red", averageConfidence: 0, citationCoverage: 0, unsupportedClaimCount: 0 };
   }
 
-  const averageConfidence = metrics.reduce((sum, metric) => sum + metric.ocrConfidence, 0) / metrics.length;
+  const scored = metrics.filter((metric) => metric.ocrAvailable !== false);
+  const averageConfidence = scored.length
+    ? scored.reduce((sum, metric) => sum + metric.ocrConfidence, 0) / scored.length
+    : 0;
   const lowest = metrics.some((metric) => metric.qualityBand === "red")
     ? "red"
     : metrics.some((metric) => metric.qualityBand === "amber")
@@ -61,7 +64,8 @@ export function aggregateQuality(metrics) {
   return {
     band: lowest,
     averageConfidence: Math.round(averageConfidence * 10) / 10,
-    fallbackPageCount: metrics.filter((metric) => metric.fallbackUsed).length
+    fallbackPageCount: metrics.filter((metric) => metric.fallbackUsed).length,
+    ocrUnavailableCount: metrics.filter((metric) => metric.ocrAvailable === false).length
   };
 }
 

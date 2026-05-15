@@ -29,12 +29,40 @@ export function ingestDocument({ files }) {
   for (const file of files) {
     const extension = validateFile(file);
     const sourceType = IMAGE_EXTENSIONS.has(extension) ? "image" : extension;
+    const ocrUnavailable = isImageWithoutText(file, sourceType);
+
+    if (ocrUnavailable) {
+      pages.push({
+        id: randomUUID(),
+        documentId,
+        sourceFile: file.name,
+        page: 1,
+        sourceType,
+        text: "",
+        status: "ocr_unavailable",
+        metric: {
+          ocrConfidence: 0,
+          wordCount: 0,
+          lowConfidenceWordCount: 0,
+          pageCoverage: 0,
+          fieldCompleteness: 0,
+          fallbackUsed: false,
+          qualityBand: "red",
+          ocrAvailable: false
+        }
+      });
+      continue;
+    }
+
+    const usedCuratedTranscript = sourceType === "image" && Boolean(lookupSampleTranscript(file.name));
     const pageTexts = normalizeToPages(file, sourceType);
 
     pageTexts.forEach((text, index) => {
       const pageNumber = index + 1;
       const metric = calculateQuality({ text, sourceType, hints: [file.name, file.type] });
-      if (file.ocrProvider) {
+      if (usedCuratedTranscript) {
+        metric.provider = "curated_transcript";
+      } else if (file.ocrProvider) {
         metric.provider = file.ocrProvider;
       }
       pages.push({
@@ -77,14 +105,22 @@ export function extractStructuredFields(document) {
   };
 }
 
+function isImageWithoutText(file, sourceType) {
+  if (sourceType !== "image") return false;
+  if (file.ocrText && String(file.ocrText).trim().length > 8) return false;
+  if (lookupSampleTranscript(file.name)) return false;
+  return true;
+}
+
 function normalizeToPages(file, sourceType) {
   const sampleTranscript = sourceType === "image" ? lookupSampleTranscript(file.name) : null;
-  const raw = String(file.ocrText || sampleTranscript || file.text || "");
-  if (file.ocrText && raw.trim().length > 20) {
-    return splitTextPages(raw);
+
+  if (sampleTranscript && sampleTranscript.trim().length > 20) {
+    return splitTextPages(sampleTranscript);
   }
 
-  if (sampleTranscript && raw.trim().length > 20) {
+  const raw = String(file.ocrText || file.text || "");
+  if (file.ocrText && raw.trim().length > 20) {
     return splitTextPages(raw);
   }
 

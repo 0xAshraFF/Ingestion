@@ -1,91 +1,118 @@
 # Local-First Document Ingestion
 
-Runnable MVP for messy document intake, local quality review, grounded drafting, BYOK fallback boundaries, and reviewer edit learning.
+Runnable MVP for messy document intake, local quality review, grounded drafting, BYOK fallback boundaries, and reviewer edit learning. Everything runs on `localhost`; no cloud calls happen unless you explicitly add a BYOK key.
 
-## Run Locally
+## Quickstart (60 seconds, zero install required)
+
+Requires Node 20+. From the repo root:
 
 ```bash
 cp .env.example .env
 npm install
-npm run ingestion
-```
-
-The ingestion command starts the local server and attempts to open the UI automatically. If your OS blocks auto-open, visit `http://127.0.0.1:3000`.
-
-This implementation uses only Node built-ins, so `npm install` is currently a no-op aside from creating the normal npm metadata. Native OCR, PDF rasterization, and paid model calls are represented by deterministic local adapters until those engines are wired in.
-
-## Build Order Implemented
-
-1. Repo/config: package scripts, `.env.example`, static UI, local JSON store.
-2. Intake/normalization: accepts PDF, PNG, JPG, TIFF, DOCX, TXT, and MD through the browser.
-3. OCR/quality: local heuristic OCR confidence, coverage, completeness, and green/amber/red bands.
-4. BYOK fallback: Gemini/Claude provider boundary with server-side key checks and redacted settings.
-5. Retrieval/grounding: chunking, term retrieval, citations with file/page/source spans.
-6. Drafting: five draft types with required sections and unsupported-claim warnings.
-7. Edit learning: captures edits, classifies them, and stores reusable draft lessons.
-8. QA/docs: focused `node:test` coverage plus the original spec, playbook, and journal.
-9. Operator UI/export: drag-and-drop upload, upload-from-computer control, max file-size validation, loader/notifications, JSON result payload, metrics table, and ZIP export.
-
-## Scripts
-
-```bash
 npm run dev
-npm run ingestion
-npm run build
-npm test
-npm run results
-npm run samples
 ```
 
-## Inputs And Results
+Then open <http://127.0.0.1:3000>.
 
-The `inputs` folder contains two demo input packs:
+`npm install` is a no-op (the app uses only Node built-ins). The server logs `Local-first ingestion app running at http://127.0.0.1:3000` when ready.
 
-- `inputs/legal-demo`: clear notice PDF, noisy scan JPG, handwritten operator note JPG, debt collection letter PDF, civil summons PDF, plus OCR/source text used for deterministic local runs.
-- `inputs/handwritten-analytical-positivism`: handwritten JPG pages and redacted manual OCR transcripts.
+## Try It (using bundled sample inputs)
 
-Run:
+The repo ships with two sample input packs you can drag into the UI immediately:
+
+- `inputs/legal-demo/` — clean and noisy PDFs/JPGs (notice, scan, summons, debt letter).
+- `inputs/handwritten-analytical-positivism/images/` — 5 handwritten JPG pages with **curated transcripts** so the demo produces real grounded text even without an OCR engine installed.
+
+Recommended first run:
+
+1. **Upload** — drag `inputs/handwritten-analytical-positivism/images/page-04-hart-rules.jpg` into the drop zone (or click *Upload from computer*).
+2. **Run ingestion** — click the button. You should see:
+   - *Quality Dashboard* fills in with a confidence band and per-page metrics.
+   - *Structured Extraction* shows extracted title/dates/parties.
+   - *Page Text* shows the actual extracted Hart text.
+3. **Generate draft** — pick a draft type (e.g. *Case fact summary*), click *Generate draft*. The textarea fills with a grounded draft.
+4. **Download ZIP** — exports `result.json`, `result.md`, `draft.md`, and `metrics.csv`.
+
+## Uploading Your Own Images (requires Tesseract)
+
+For images that aren't in the curated sample pack, the app uses local Tesseract OCR. There are two ways to install it:
+
+**From the UI** — open the *OCR and BYOK Settings* section (Step 5). If Tesseract is missing, click *Install local OCR*. On macOS this runs `brew install tesseract` for you and takes 1–3 minutes.
+
+**From the command line:**
+
+```bash
+brew install tesseract           # macOS
+sudo apt-get install tesseract-ocr  # Debian/Ubuntu
+```
+
+Restart `npm run dev` after install. If you upload an image without Tesseract installed *and* the filename doesn't match a curated transcript, the UI honestly reports `OCR not installed` instead of fabricating a confidence score.
+
+## BYOK Vision Fallback (optional)
+
+You can add Gemini or Claude vision keys to improve OCR quality on low-confidence pages. Either:
+
+- Edit `.env` and set `GEMINI_API_KEY` or `ANTHROPIC_API_KEY`, restart the server, OR
+- Paste keys into the *BYOK Vision Fallback* form in the UI (Step 5). Keys are stored server-side in `data/store.json` (gitignored); the browser only ever sees a redacted status.
+
+After upload, if a page has low confidence, the *Run BYOK fallback* button becomes active.
+
+## Generating the Bundled Result Artifacts
+
+To regenerate the committed sample outputs under `results/`:
 
 ```bash
 npm run results
 ```
 
-That command builds grounded drafts from both input packs and writes actual outputs under `results`:
+Produces:
 
 - `results/legal-demo/actual_case_fact_summary.md`
 - `results/legal-demo/model-confidence-results.csv`
 - `results/legal-demo/evaluation-report.md`
 - `results/handwritten-analytical-positivism/actual-study-note-summary.md`
 - `results/handwritten-analytical-positivism/evaluation-report.md`
-- `results/model-confidence.md`
-- `results/model-confidence.csv`
+- `results/model-confidence.md`, `results/model-confidence.csv`
 
-The source inputs stay separate from generated results so reviewers can inspect the document-understanding path clearly.
-
-## UI Export Flow
-
-The upload screen accepts drag-and-drop or local file selection. Each file is validated before ingestion; files over 10 MB or unsupported extensions are rejected before processing. After upload and draft generation, the UI shows:
-
-- structured JSON suitable for database ingestion,
-- the generated Markdown-style draft,
-- OCR/model confidence metrics,
-- a ZIP download containing `result.json`, `result.md`, `draft.md`, and `metrics.csv`.
-
-The five included handwritten jurisprudence JPGs use curated redacted transcripts when uploaded by their known filenames, so the demo can show extraction and grounding without native OCR dependencies.
-
-## Local OCR And BYOK From UI
-
-The settings section checks whether local Tesseract OCR is available. If it is missing, the UI asks before installing it locally. On macOS, automatic install uses Homebrew:
+## All Scripts
 
 ```bash
-brew install tesseract
+npm run dev         # start the server
+npm run ingestion   # start and auto-open the browser
+npm run start       # alias for dev
+npm test            # run node:test suite
+npm run build       # build-time sanity check
+npm run results     # regenerate sample result artifacts
+npm run samples     # alias for results
 ```
 
-BYOK keys can also be saved from the UI before ingestion. Keys are stored server-side in the ignored `data/store.json` runtime file and only redacted status is returned to the browser.
+## What's Inside
+
+Build order implemented:
+
+1. **Repo/config** — package scripts, `.env.example`, static UI, local JSON store.
+2. **Intake/normalization** — PDF, PNG, JPG, TIFF, DOCX, TXT, MD via the browser.
+3. **OCR/quality** — local Tesseract OCR (auto-installable), heuristic confidence/coverage, green/amber/red bands.
+4. **BYOK fallback** — Gemini/Claude provider boundary with server-side key checks and redacted UI status.
+5. **Retrieval/grounding** — chunking, term retrieval, citations with file/page/source spans.
+6. **Drafting** — six draft types with required sections and unsupported-claim warnings.
+7. **Edit learning** — captures reviewer edits, classifies them, stores reusable lessons.
+8. **QA/docs** — `node:test` coverage, spec, playbook, journal.
+9. **Operator UI/export** — drag-drop, file validation, loader/toasts, JSON payload, metrics table, ZIP export.
+
+## UI Walkthrough
+
+| Step | Section | What it does |
+| --- | --- | --- |
+| 1 | Upload and Normalize | Drag/drop or click; 10 MB cap per file. Validates before sending. |
+| 2 | Quality Dashboard | Per-page OCR confidence, coverage, band. *Run BYOK fallback* when red. |
+| 3 | Structured Extraction | Inferred title, dates, amounts, addresses, parties, deadlines. |
+| 4 | Grounded Draft | Pick a draft type, generate, capture reviewer edits as lessons. |
+| 5 | OCR and BYOK Settings | Install local OCR, paste BYOK keys, switch fallback mode. |
 
 ## Notes
 
-- BYOK keys stay server-side in `.env`.
+- BYOK keys never reach the browser. Storage is `data/store.json` (gitignored) or `.env`.
 - The app blocks paid fallback if no matching BYOK key is configured.
-- Uploaded/demo data is stored under `data/store.json`, which is ignored by git.
-- Local secret files are ignored by git. See `env/README.md` and `docs/GUARDRAILS.md`.
+- Uploaded files and runtime state live in `data/` (gitignored).
+- See `env/README.md` and `docs/GUARDRAILS.md` for the secret-handling boundary.
