@@ -9,7 +9,8 @@ import { providerSettings, runPaidFallback } from "./lib/providers.js";
 import { addLesson, getStore, loadStore, upsertDocument } from "./lib/store.js";
 import { updateSettings } from "./lib/store.js";
 import { aggregateQuality } from "./lib/quality.js";
-import { buildDocumentResult, buildResultZip } from "./lib/exportBundle.js";
+import { buildDocumentResult, buildResultZip, plainTextDump } from "./lib/exportBundle.js";
+import { listProfiles } from "./lib/schemaProfiles.js";
 import { spawn } from "node:child_process";
 import { applyLocalOcr, installLocalOcr, localOcrStatus } from "./lib/localOcr.js";
 
@@ -73,17 +74,23 @@ async function routeApi(request, response, url) {
     return;
   }
 
+  if (request.method === "GET" && url.pathname === "/api/schema/profiles") {
+    sendJson(response, 200, { profiles: listProfiles() });
+    return;
+  }
+
   if (request.method === "POST" && url.pathname === "/api/documents/upload") {
     const body = await readJson(request);
     const files = await applyLocalOcr(body.files || []);
     const document = ingestDocument({ ...body, files });
     const chunks = chunkDocument(document);
     await upsertDocument(document, chunks);
+    const profileId = typeof body.profile === "string" ? body.profile : "auto";
     sendJson(response, 201, {
       document,
-      fields: extractStructuredFields(document),
+      fields: extractStructuredFields(document, profileId),
       chunks,
-      result: buildDocumentResult({ document, chunks })
+      result: buildDocumentResult({ document, chunks, profileId })
     });
     return;
   }
@@ -129,7 +136,19 @@ async function routeDocumentApi(request, response, parts) {
   }
 
   if (request.method === "GET" && action === "extractions") {
-    sendJson(response, 200, { fields: extractStructuredFields(document), pages: document.pages });
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    const profileId = url.searchParams.get("profile") || "auto";
+    sendJson(response, 200, { fields: extractStructuredFields(document, profileId), pages: document.pages });
+    return;
+  }
+
+  if (request.method === "GET" && action === "text") {
+    const text = plainTextDump(document);
+    response.writeHead(200, {
+      "content-type": "text/plain; charset=utf-8",
+      "content-disposition": `attachment; filename="${safeFilename(document.title || document.id)}-extracted.txt"`
+    });
+    response.end(text);
     return;
   }
 
@@ -148,17 +167,23 @@ async function routeDocumentApi(request, response, parts) {
   }
 
   if (request.method === "GET" && action === "result") {
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    const profileId = url.searchParams.get("profile") || "auto";
     sendJson(response, 200, buildDocumentResult({
       document,
-      chunks: getStore().chunks[document.id] || []
+      chunks: getStore().chunks[document.id] || [],
+      profileId
     }));
     return;
   }
 
   if (request.method === "GET" && action === "export.zip") {
+    const url = new URL(request.url, `http://${request.headers.host}`);
+    const profileId = url.searchParams.get("profile") || "auto";
     const zip = buildResultZip(buildDocumentResult({
       document,
-      chunks: getStore().chunks[document.id] || []
+      chunks: getStore().chunks[document.id] || [],
+      profileId
     }));
     response.writeHead(200, {
       "content-type": "application/zip",

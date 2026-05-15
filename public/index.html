@@ -39,6 +39,10 @@
               <span id="file-list" class="drop-subtitle">PDF, image, DOCX, TXT, or MD. Max 10 MB per file.</span>
             </label>
             <div class="upload-actions">
+              <label class="profile-picker">
+                <span>JSON schema</span>
+                <select id="schema-profile" aria-label="JSON schema profile"></select>
+              </label>
               <button id="choose-button" type="button">Upload from computer</button>
               <button id="upload-button" type="submit">Run ingestion</button>
             </div>
@@ -91,6 +95,7 @@
                 <option>First-pass internal memo</option>
               </select>
               <button id="draft-button" type="button" disabled>Generate draft</button>
+              <button id="download-text-button" type="button" disabled>Download text</button>
               <button id="download-button" type="button" disabled>Download ZIP</button>
             </div>
           </div>

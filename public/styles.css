@@ -190,6 +190,21 @@ main {
   align-content: center;
 }
 
+.profile-picker {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.profile-picker select {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
 .validation-panel {
   margin-top: 10px;
   color: var(--red);

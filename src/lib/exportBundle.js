@@ -3,7 +3,7 @@ import { extractStructuredFields } from "./intake.js";
 
 const CRC_TABLE = makeCrcTable();
 
-export function buildDocumentResult({ document, chunks = [] }) {
+export function buildDocumentResult({ document, chunks = [], profileId = "auto" }) {
   const metrics = document.pages.map((page) => page.metric);
   const latestDraft = document.drafts?.at(-1) || null;
   const quality = {
@@ -23,7 +23,7 @@ export function buildDocumentResult({ document, chunks = [] }) {
 
   return {
     document,
-    fields: extractStructuredFields(document),
+    fields: extractStructuredFields(document, profileId),
     quality,
     chunks,
     latestDraft
@@ -76,9 +76,22 @@ export function buildResultZip(result) {
     ["result.json", JSON.stringify(result, null, 2)],
     ["metrics.csv", metricsCsv(result)],
     ["result.md", resultMarkdown(result)],
-    ["draft.md", result.latestDraft?.content || "No draft has been generated yet."]
+    ["draft.md", result.latestDraft?.content || "No draft has been generated yet."],
+    ["extracted_text.txt", plainTextDump(result.document)]
   ];
   return createZip(files);
+}
+
+export function plainTextDump(document) {
+  if (!document?.pages?.length) return "";
+  return document.pages
+    .map((page) => {
+      const body = page.status === "ocr_unavailable"
+        ? "[Local OCR not installed — no extracted text for this image.]"
+        : (page.text || "").trim() || "[No text extracted for this page.]";
+      return `=== ${page.sourceFile} — page ${page.page} ===\n${body}`;
+    })
+    .join("\n\n");
 }
 
 function modelForSource(sourceType) {

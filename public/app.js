@@ -15,6 +15,7 @@ const elements = {
   fileList: document.querySelector("#file-list"),
   chooseButton: document.querySelector("#choose-button"),
   uploadButton: document.querySelector("#upload-button"),
+  schemaProfile: document.querySelector("#schema-profile"),
   validationPanel: document.querySelector("#validation-panel"),
   loader: document.querySelector("#loader"),
   statusPill: document.querySelector("#status-pill"),
@@ -26,6 +27,7 @@ const elements = {
   draftType: document.querySelector("#draft-type"),
   draftButton: document.querySelector("#draft-button"),
   downloadButton: document.querySelector("#download-button"),
+  downloadTextButton: document.querySelector("#download-text-button"),
   draftOutput: document.querySelector("#draft-output"),
   editBefore: document.querySelector("#edit-before"),
   editAfter: document.querySelector("#edit-after"),
@@ -77,7 +79,8 @@ elements.uploadForm.addEventListener("submit", async (event) => {
   setLoading(true, "Reading files locally");
   try {
     const payloadFiles = await Promise.all(files.map(readBrowserFile));
-    const result = await api("/api/documents/upload", { method: "POST", body: { files: payloadFiles } });
+    const profile = elements.schemaProfile.value || "auto";
+    const result = await api("/api/documents/upload", { method: "POST", body: { files: payloadFiles, profile } });
 
     state.document = result.document;
     state.fields = result.fields;
@@ -85,9 +88,10 @@ elements.uploadForm.addEventListener("submit", async (event) => {
     state.result = result.result;
 
     setStatus("Local intake complete");
-    notify("Upload finished. Extraction and quality metrics are ready.", "success");
+    notify(`Upload finished. JSON schema: ${result.fields.profile || profile}.`, "success");
     elements.draftButton.disabled = false;
     elements.downloadButton.disabled = false;
+    elements.downloadTextButton.disabled = false;
     elements.fallbackButton.disabled = !state.document.pages.some((page) => page.status === "local_low_confidence");
     renderDocument(result.document, result.fields);
     renderResult(result.result);
@@ -97,6 +101,20 @@ elements.uploadForm.addEventListener("submit", async (event) => {
     setStatus("Upload failed");
   } finally {
     setLoading(false);
+  }
+});
+
+elements.schemaProfile.addEventListener("change", async () => {
+  if (!state.document) return;
+  const profile = elements.schemaProfile.value || "auto";
+  try {
+    const payload = await api(`/api/documents/${state.document.id}/extractions?profile=${encodeURIComponent(profile)}`);
+    state.fields = payload.fields;
+    renderDocument(state.document, payload.fields);
+    notify(`Re-extracted with ${payload.fields.profile || profile} schema.`, "success");
+    await refreshResult(profile);
+  } catch (error) {
+    notify(error.message, "error");
   }
 });
 
@@ -146,8 +164,15 @@ elements.draftButton.addEventListener("click", async () => {
 
 elements.downloadButton.addEventListener("click", () => {
   if (!state.document) return;
-  window.location.href = `/api/documents/${state.document.id}/export.zip`;
+  const profile = elements.schemaProfile.value || "auto";
+  window.location.href = `/api/documents/${state.document.id}/export.zip?profile=${encodeURIComponent(profile)}`;
   notify("ZIP export started.", "success");
+});
+
+elements.downloadTextButton.addEventListener("click", () => {
+  if (!state.document) return;
+  window.location.href = `/api/documents/${state.document.id}/text`;
+  notify("Text export started.", "success");
 });
 
 elements.installOcrButton.addEventListener("click", async () => {
@@ -204,6 +229,7 @@ elements.editButton.addEventListener("click", async () => {
 
 renderProviders();
 renderOcr();
+renderProfiles();
 
 async function renderQuality() {
   if (!state.document) {
@@ -250,16 +276,25 @@ async function renderQuality() {
     </table>`;
 }
 
-async function refreshResult() {
+async function refreshResult(profileId) {
   if (!state.document) return;
-  state.result = await api(`/api/documents/${state.document.id}/result`);
+  const profile = profileId || elements.schemaProfile.value || "auto";
+  state.result = await api(`/api/documents/${state.document.id}/result?profile=${encodeURIComponent(profile)}`);
   renderResult(state.result);
   await renderQuality();
 }
 
+async function renderProfiles() {
+  const payload = await api("/api/schema/profiles");
+  elements.schemaProfile.innerHTML = payload.profiles
+    .map((profile) => `<option value="${profile.id}">${profile.label}</option>`)
+    .join("");
+  elements.schemaProfile.value = "auto";
+}
+
 function renderDocument(documentData, fields) {
   const fieldRows = Object.entries(fields).map(([key, value]) => {
-    const text = Array.isArray(value) ? value.join(", ") || "Not found" : value || "Not found";
+    const text = formatFieldValue(value);
     return `<div class="field-item"><span>${labelFor(key)}</span><strong>${escapeHtml(text)}</strong></div>`;
   });
   elements.fieldPanel.innerHTML = fieldRows.join("");
@@ -409,7 +444,24 @@ function formatBytes(bytes) {
 }
 
 function labelFor(key) {
-  return key.replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase());
+  return key.replace(/_/g, " ").replace(/([A-Z])/g, " $1").replace(/^./, (letter) => letter.toUpperCase());
+}
+
+function formatFieldValue(value) {
+  if (value == null || value === "") return "Not found";
+  if (Array.isArray(value)) {
+    if (value.length === 0) return "Not found";
+    return value.map((item) => {
+      if (item && typeof item === "object") {
+        return Object.entries(item).map(([k, v]) => `${k}: ${v}`).join(" / ");
+      }
+      return String(item);
+    }).join(", ");
+  }
+  if (typeof value === "object") {
+    return Object.entries(value).map(([k, v]) => `${k}: ${v}`).join(", ");
+  }
+  return String(value);
 }
 
 function escapeHtml(value) {

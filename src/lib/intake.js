@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { calculateQuality, needsFallback } from "./quality.js";
 import { lookupSampleTranscript } from "./sampleTranscripts.js";
+import { applyProfile } from "./schemaProfiles.js";
 
 const SUPPORTED_EXTENSIONS = new Set(["pdf", "png", "jpg", "jpeg", "tif", "tiff", "docx", "txt", "md"]);
 const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "tif", "tiff"]);
@@ -93,16 +94,9 @@ export function ingestDocument({ files }) {
   };
 }
 
-export function extractStructuredFields(document) {
-  const allText = document.pages.map((page) => page.text).join("\n");
-  return {
-    title: inferTitle(document, allText),
-    dates: uniqueMatches(allText, /\b(?:\d{4}-\d{2}-\d{2}|\d{1,2}\/\d{1,2}\/\d{2,4}|(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4})\b/gi),
-    amounts: uniqueMatches(allText, /(?:USD\s*)?\$\s?\d[\d,]*(?:\.\d{2})?/gi),
-    addresses: uniqueMatches(allText, /\b\d{1,6}[ \t]+[A-Za-z0-9 .'-]+(?:Street|St|Road|Rd|Avenue|Ave|Lane|Ln|Drive|Dr|Boulevard|Blvd)\b/gi),
-    parties: inferParties(allText),
-    deadlines: uniqueMatches(allText, /\b(?:deadline|due|respond by|before|no later than)\s+.{0,48}/gi)
-  };
+export function extractStructuredFields(document, profileId = "auto") {
+  const { profile, fields } = applyProfile(document, profileId);
+  return { profile, ...fields };
 }
 
 function isImageWithoutText(file, sourceType) {
@@ -155,21 +149,6 @@ function splitTextPages(text) {
 
 function cleanPdfText(text) {
   return text.replace(/[^\S\r\n]+/g, " ").replace(/\0/g, "").trim();
-}
-
-function inferTitle(document, allText) {
-  const firstLine = allText.split(/\n/).map((line) => line.trim()).find(Boolean);
-  return firstLine?.slice(0, 90) || document.title;
-}
-
-function inferParties(text) {
-  const labels = uniqueMatches(text, /\b(?:tenant|landlord|plaintiff|defendant|client|applicant|respondent|petitioner)\s*:\s*[A-Z][A-Za-z .'-]+/gi);
-  const names = uniqueMatches(text, /\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2}\b/g).slice(0, 8);
-  return labels.length ? labels : names;
-}
-
-function uniqueMatches(text, pattern) {
-  return [...new Set(String(text).match(pattern) || [])].map((value) => value.trim()).slice(0, 12);
 }
 
 function extensionFor(name = "") {

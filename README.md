@@ -48,6 +48,27 @@ sudo apt-get install tesseract-ocr  # Debian/Ubuntu
 
 Restart `npm run dev` after install. If you upload an image without Tesseract installed *and* the filename doesn't match a curated transcript, the UI honestly reports `OCR not installed` instead of fabricating a confidence score.
 
+## JSON Schema Profiles
+
+The *JSON schema* dropdown in the upload bar lets you shape the extracted JSON to the document type. Profiles:
+
+| Profile | Fields |
+|---|---|
+| `auto` (default) | Detects from filename + page text; falls back to `generic`. |
+| `legal_notice` | title, dates, amounts, addresses, parties, deadlines |
+| `book_page` | title, author, chapter, page_number, headings, key_terms, quotations, citations |
+| `receipt_invoice` | vendor, invoice_number, date, total, currency, tax, line_items, address |
+| `study_note` | topic, key_concepts, definitions, thinkers_mentioned, references, headings |
+| `generic` | title, dates, names, numbers, headings |
+
+Change the profile after upload to re-extract without re-uploading. The chosen profile is also reflected in the ZIP's `result.json` and `result.md`.
+
+## Plain-Text Export
+
+- *Download text* (next to *Download ZIP*) returns just the extracted text per page — one `=== <file> page <n> ===` header per page, no metadata.
+- `extracted_text.txt` is also bundled inside the ZIP alongside `result.json`, `metrics.csv`, `result.md`, and `draft.md`.
+- API: `GET /api/documents/:id/text` returns `text/plain` directly.
+
 ## BYOK Vision Fallback (optional)
 
 You can add Gemini or Claude vision keys to improve OCR quality on low-confidence pages. Either:
