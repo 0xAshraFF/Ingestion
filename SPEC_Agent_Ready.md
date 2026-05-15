@@ -263,6 +263,8 @@ GET  /api/documents/:id/quality
 GET  /api/documents/:id/result
 GET  /api/documents/:id/export.zip
 POST /api/documents/:id/fallback
+GET  /api/ocr/status
+POST /api/ocr/install
 POST /api/drafts
 GET  /api/drafts/:id
 PATCH /api/drafts/:id
@@ -284,6 +286,7 @@ Pages:
 - Draft generator page.
 - Draft review/edit page.
 - BYOK provider settings page.
+- Local OCR settings page/panel.
 
 Quality dashboard must show:
 
@@ -303,6 +306,8 @@ Upload UI must:
 - Show a JSON result payload suitable for later database ingestion.
 - Provide a ZIP export containing `result.json`, `result.md`, `draft.md`, and `metrics.csv`.
 - Use curated transcripts for the included handwritten sample JPGs when uploaded by their known filenames.
+- Check local OCR availability and ask before installing it.
+- Let the operator save BYOK provider keys from the UI before ingestion.
 
 ## 15. Error Handling
 
@@ -335,6 +340,8 @@ Upload UI must:
 - Edit event classification.
 - Export bundle generation.
 - Curated transcript lookup for known handwritten sample images.
+- Provider settings redaction.
+- Local OCR availability status.
 
 ### Integration Tests
 

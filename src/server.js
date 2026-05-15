@@ -7,9 +7,11 @@ import { generateDraft } from "./lib/drafts.js";
 import { captureEdit } from "./lib/editLearning.js";
 import { providerSettings, runPaidFallback } from "./lib/providers.js";
 import { addLesson, getStore, loadStore, upsertDocument } from "./lib/store.js";
+import { updateSettings } from "./lib/store.js";
 import { aggregateQuality } from "./lib/quality.js";
 import { buildDocumentResult, buildResultZip } from "./lib/exportBundle.js";
 import { spawn } from "node:child_process";
+import { applyLocalOcr, installLocalOcr, localOcrStatus } from "./lib/localOcr.js";
 
 const root = resolve(".");
 const publicDir = resolve("public");
@@ -48,13 +50,33 @@ async function routeApi(request, response, url) {
   }
 
   if (request.method === "GET" && url.pathname === "/api/settings/providers") {
-    sendJson(response, 200, providerSettings());
+    sendJson(response, 200, providerSettings(process.env, getStore().settings));
+    return;
+  }
+
+  if (request.method === "PATCH" && url.pathname === "/api/settings/providers") {
+    const body = await readJson(request);
+    await updateSettings({
+      providers: sanitizeProviderSettings(body)
+    });
+    sendJson(response, 200, providerSettings(process.env, getStore().settings));
+    return;
+  }
+
+  if (request.method === "GET" && url.pathname === "/api/ocr/status") {
+    sendJson(response, 200, localOcrStatus());
+    return;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/ocr/install") {
+    sendJson(response, 200, await installLocalOcr());
     return;
   }
 
   if (request.method === "POST" && url.pathname === "/api/documents/upload") {
     const body = await readJson(request);
-    const document = ingestDocument(body);
+    const files = await applyLocalOcr(body.files || []);
+    const document = ingestDocument({ ...body, files });
     const chunks = chunkDocument(document);
     await upsertDocument(document, chunks);
     sendJson(response, 201, {
@@ -151,7 +173,7 @@ async function routeDocumentApi(request, response, parts) {
     const body = await readJson(request);
     const targetIds = new Set(body.pageIds || document.pages.filter((page) => page.status === "local_low_confidence").map((page) => page.id));
     document.pages = document.pages.map((page) => targetIds.has(page.id)
-      ? runPaidFallback({ page, providerName: body.provider })
+      ? runPaidFallback({ page, providerName: body.provider, savedSettings: getStore().settings })
       : page);
     const chunks = chunkDocument(document);
     await upsertDocument(document, chunks);
@@ -226,6 +248,23 @@ function sendJson(response, statusCode, payload) {
 
 function safeFilename(value) {
   return String(value).toLowerCase().replace(/[^a-z0-9._-]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80) || "document";
+}
+
+function sanitizeProviderSettings(body = {}) {
+  const allowed = {};
+  for (const key of [
+    "GEMINI_API_KEY",
+    "GEMINI_VISION_MODEL",
+    "ANTHROPIC_API_KEY",
+    "CLAUDE_VISION_MODEL",
+    "PAID_FALLBACK_MODE",
+    "PAID_FALLBACK_BUDGET_USD_PER_JOB"
+  ]) {
+    if (typeof body[key] === "string" && body[key].trim()) {
+      allowed[key] = body[key].trim();
+    }
+  }
+  return allowed;
 }
 
 function openBrowser(url) {

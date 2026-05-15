@@ -9,6 +9,7 @@ This project is a local-first document understanding demo. These guardrails keep
 - Commit only `.env.example` with blank or fake values.
 - Provider keys must stay server-side. Browser code must never read `GEMINI_API_KEY`, `ANTHROPIC_API_KEY`, or similar secrets.
 - Logs must show only redacted key state such as `missing`, `set`, or `invalid-looking`.
+- UI-entered BYOK keys are saved only in ignored runtime storage under `data/`.
 
 ## Data Privacy
 
@@ -38,6 +39,12 @@ This project is a local-first document understanding demo. These guardrails keep
 - Keep generated drafts, reports, and metrics under `results/`.
 - Report model or adapter used, confidence metric, quality band, fallback usage, and citation count.
 - Treat confidence as an extraction-quality proxy unless a ground-truth benchmark is available.
+
+## Local OCR Installation
+
+- Ask the operator before running local OCR installation.
+- Use the package manager only for the explicit OCR dependency, currently Tesseract.
+- If automatic install is unavailable, show manual install guidance instead of silently failing.
 
 ## Git Hygiene
 

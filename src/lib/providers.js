@@ -1,26 +1,32 @@
-export function providerSettings(env = process.env) {
+export function providerSettings(env = process.env, savedSettings = {}) {
+  const providers = savedSettings.providers || {};
+  const geminiKey = providers.GEMINI_API_KEY || env.GEMINI_API_KEY;
+  const claudeKey = providers.ANTHROPIC_API_KEY || env.ANTHROPIC_API_KEY;
+  const geminiModel = providers.GEMINI_VISION_MODEL || env.GEMINI_VISION_MODEL || "gemini-3-flash";
+  const claudeModel = providers.CLAUDE_VISION_MODEL || env.CLAUDE_VISION_MODEL || "claude-haiku-4-5";
+
   return {
-    fallbackMode: env.PAID_FALLBACK_MODE || "ask_each_job",
-    budgetUsdPerJob: Number(env.PAID_FALLBACK_BUDGET_USD_PER_JOB || 1),
+    fallbackMode: providers.PAID_FALLBACK_MODE || env.PAID_FALLBACK_MODE || "ask_each_job",
+    budgetUsdPerJob: Number(providers.PAID_FALLBACK_BUDGET_USD_PER_JOB || env.PAID_FALLBACK_BUDGET_USD_PER_JOB || 1),
     providers: [
       {
         name: "gemini_byok",
-        model: env.GEMINI_VISION_MODEL || "gemini-3-flash",
-        available: Boolean(env.GEMINI_API_KEY),
-        configured: redactState(env.GEMINI_API_KEY)
+        model: geminiModel,
+        available: Boolean(geminiKey),
+        configured: redactState(geminiKey)
       },
       {
         name: "claude_byok",
-        model: env.CLAUDE_VISION_MODEL || "claude-haiku-4-5",
-        available: Boolean(env.ANTHROPIC_API_KEY),
-        configured: redactState(env.ANTHROPIC_API_KEY)
+        model: claudeModel,
+        available: Boolean(claudeKey),
+        configured: redactState(claudeKey)
       }
     ]
   };
 }
 
-export function runPaidFallback({ page, providerName, env = process.env }) {
-  const settings = providerSettings(env);
+export function runPaidFallback({ page, providerName, env = process.env, savedSettings = {} }) {
+  const settings = providerSettings(env, savedSettings);
   const provider = settings.providers.find((item) => item.name === providerName) || settings.providers[0];
   if (!provider?.available) {
     throw new Error(`${providerName || "Paid fallback"} is not configured. Add a BYOK key in .env.`);

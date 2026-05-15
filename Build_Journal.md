@@ -100,3 +100,11 @@ Reason: The requested operator experience is one command followed by an upload-r
 Added a curated transcript lookup for the five provided handwritten jurisprudence JPGs. When an operator uploads those exact files, the local pipeline uses the redacted transcript instead of returning only the generic image placeholder.
 
 Reason: Native browser-side OCR is not available in this zero-dependency MVP. The transcript adapter lets the assessment demo show extraction, retrieval, metrics, JSON, and export flow for the supplied handwritten documents while still marking image quality as review-sensitive.
+
+## Journal Entry 014 - Local OCR and BYOK Settings UI
+
+Added a settings panel that checks local Tesseract OCR availability, asks for user confirmation before running a local install command, and saves BYOK provider keys server-side before ingestion.
+
+Decision: Keep keys in the ignored runtime store and return only redacted provider state to the browser.
+
+Reason: Operators need to configure OCR and paid fallback from the UI without editing `.env`, while still keeping secrets out of Git and out of frontend state.

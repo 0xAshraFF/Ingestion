@@ -119,8 +119,50 @@
         </section>
 
         <section id="settings" class="workspace-band">
-          <p class="eyebrow">Step 5</p>
-          <h2>Provider Settings</h2>
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Step 5</p>
+              <h2>OCR and BYOK Settings</h2>
+            </div>
+            <span id="ocr-status" class="status-pill">Checking OCR</span>
+          </div>
+          <div class="settings-grid">
+            <div class="settings-panel">
+              <h3>Local OCR</h3>
+              <p id="ocr-message" class="notice">Checking Tesseract OCR status...</p>
+              <button id="install-ocr-button" type="button">Install local OCR</button>
+            </div>
+            <form id="provider-form" class="settings-panel">
+              <h3>BYOK Vision Fallback</h3>
+              <div class="form-grid">
+                <label>
+                  <span>Gemini API key</span>
+                  <input id="gemini-key" type="password" autocomplete="off" placeholder="GEMINI_API_KEY">
+                </label>
+                <label>
+                  <span>Gemini model</span>
+                  <input id="gemini-model" type="text" placeholder="gemini-3-flash">
+                </label>
+                <label>
+                  <span>Claude API key</span>
+                  <input id="claude-key" type="password" autocomplete="off" placeholder="ANTHROPIC_API_KEY">
+                </label>
+                <label>
+                  <span>Claude model</span>
+                  <input id="claude-model" type="text" placeholder="claude-haiku-4-5">
+                </label>
+                <label>
+                  <span>Fallback mode</span>
+                  <select id="fallback-mode">
+                    <option value="ask_each_job">ask_each_job</option>
+                    <option value="auto_when_key_exists">auto_when_key_exists</option>
+                    <option value="disabled">disabled</option>
+                  </select>
+                </label>
+              </div>
+              <button id="save-provider-button" type="submit">Save BYOK settings</button>
+            </form>
+          </div>
           <div id="provider-panel" class="provider-grid"></div>
         </section>
       </main>
