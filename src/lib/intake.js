@@ -3,11 +3,15 @@ import { calculateQuality, needsFallback } from "./quality.js";
 
 const SUPPORTED_EXTENSIONS = new Set(["pdf", "png", "jpg", "jpeg", "tif", "tiff", "docx", "txt", "md"]);
 const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "tif", "tiff"]);
+export const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 
 export function validateFile(file) {
   const extension = extensionFor(file.name);
   if (!SUPPORTED_EXTENSIONS.has(extension)) {
     throw new Error(`Unsupported file type: ${file.name}`);
+  }
+  if ((file.size || 0) > MAX_FILE_SIZE_BYTES) {
+    throw new Error(`File is too large: ${file.name}. Maximum size is ${formatBytes(MAX_FILE_SIZE_BYTES)}.`);
   }
   return extension;
 }
@@ -126,4 +130,8 @@ function uniqueMatches(text, pattern) {
 function extensionFor(name = "") {
   const last = name.toLowerCase().split(".").pop();
   return last === name ? "" : last;
+}
+
+function formatBytes(bytes) {
+  return `${Math.round(bytes / 1024 / 1024)} MB`;
 }

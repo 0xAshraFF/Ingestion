@@ -35,11 +35,19 @@
           <form id="upload-form" class="upload-surface">
             <label class="drop-zone">
               <input id="file-input" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.docx,.txt,.md">
-              <span class="drop-title">Choose PDF, image, DOCX, TXT, or MD files</span>
-              <span id="file-list" class="drop-subtitle">No files selected</span>
+              <span class="drop-title">Drop files here or upload from computer</span>
+              <span id="file-list" class="drop-subtitle">PDF, image, DOCX, TXT, or MD. Max 10 MB per file.</span>
             </label>
-            <button type="submit">Run local intake</button>
+            <div class="upload-actions">
+              <button id="choose-button" type="button">Upload from computer</button>
+              <button id="upload-button" type="submit">Run ingestion</button>
+            </div>
           </form>
+          <div id="validation-panel" class="validation-panel" aria-live="polite"></div>
+          <div id="loader" class="loader hidden" aria-live="polite">
+            <span class="spinner"></span>
+            <span>Processing document bundle...</span>
+          </div>
         </section>
 
         <section id="quality" class="workspace-band">
@@ -83,6 +91,7 @@
                 <option>First-pass internal memo</option>
               </select>
               <button id="draft-button" type="button" disabled>Generate draft</button>
+              <button id="download-button" type="button" disabled>Download ZIP</button>
             </div>
           </div>
           <textarea id="draft-output" spellcheck="true"></textarea>
@@ -94,6 +103,21 @@
           <div id="edit-log" class="notice"></div>
         </section>
 
+        <section id="results" class="workspace-band split-band">
+          <div>
+            <p class="eyebrow">Result JSON</p>
+            <h2>Database-Ready Payload</h2>
+            <pre id="json-output" class="json-output">{}</pre>
+          </div>
+          <div>
+            <p class="eyebrow">Export</p>
+            <h2>Generated Artifacts</h2>
+            <div id="artifact-panel" class="artifact-panel">
+              Upload files and generate a draft to export JSON, Markdown, CSV metrics, and draft text.
+            </div>
+          </div>
+        </section>
+
         <section id="settings" class="workspace-band">
           <p class="eyebrow">Step 5</p>
           <h2>Provider Settings</h2>
@@ -101,6 +125,7 @@
         </section>
       </main>
     </div>
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
 
     <script src="/app.js" type="module"></script>
   </body>

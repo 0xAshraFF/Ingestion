@@ -7,10 +7,10 @@ Runnable MVP for messy document intake, local quality review, grounded drafting,
 ```bash
 cp .env.example .env
 npm install
-npm run dev
+npm run ingestion
 ```
 
-Open `http://localhost:3000`.
+The ingestion command starts the local server and attempts to open the UI automatically. If your OS blocks auto-open, visit `http://127.0.0.1:3000`.
 
 This implementation uses only Node built-ins, so `npm install` is currently a no-op aside from creating the normal npm metadata. Native OCR, PDF rasterization, and paid model calls are represented by deterministic local adapters until those engines are wired in.
 
@@ -24,11 +24,13 @@ This implementation uses only Node built-ins, so `npm install` is currently a no
 6. Drafting: five draft types with required sections and unsupported-claim warnings.
 7. Edit learning: captures edits, classifies them, and stores reusable draft lessons.
 8. QA/docs: focused `node:test` coverage plus the original spec, playbook, and journal.
+9. Operator UI/export: drag-and-drop upload, upload-from-computer control, max file-size validation, loader/notifications, JSON result payload, metrics table, and ZIP export.
 
 ## Scripts
 
 ```bash
 npm run dev
+npm run ingestion
 npm run build
 npm test
 npm run results
@@ -59,6 +61,15 @@ That command builds grounded drafts from both input packs and writes actual outp
 - `results/model-confidence.csv`
 
 The source inputs stay separate from generated results so reviewers can inspect the document-understanding path clearly.
+
+## UI Export Flow
+
+The upload screen accepts drag-and-drop or local file selection. Each file is validated before ingestion; files over 10 MB or unsupported extensions are rejected before processing. After upload and draft generation, the UI shows:
+
+- structured JSON suitable for database ingestion,
+- the generated Markdown-style draft,
+- OCR/model confidence metrics,
+- a ZIP download containing `result.json`, `result.md`, `draft.md`, and `metrics.csv`.
 
 ## Notes
 

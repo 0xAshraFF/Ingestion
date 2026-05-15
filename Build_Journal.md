@@ -80,3 +80,17 @@ Before coding, confirm:
 - Day-one OCR languages.
 - Local runtime allowed in the office environment.
 - Data retention policy for demo files.
+
+## Journal Entry 011 - Operator Upload and Export Flow
+
+Added a basic operator UI focused on the submission demo path: drag-and-drop upload, upload-from-computer control, client and server max-size validation, loader state, completion notifications, JSON result display, metrics table, and ZIP export.
+
+Decision: Keep the implementation dependency-free and local-first. The ZIP export is generated with Node buffers and includes `result.json`, `result.md`, `draft.md`, and `metrics.csv`.
+
+Reason: The reviewer can inspect both machine-readable output for future database storage and human-readable outputs for assessment without needing extra services.
+
+## Journal Entry 012 - Run Command
+
+Added `npm run ingestion` as the primary demo command. It starts the local server and attempts to open the browser UI.
+
+Reason: The requested operator experience is one command followed by an upload-ready UI.

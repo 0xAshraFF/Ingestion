@@ -8,6 +8,7 @@ const required = [
   "src/lib/retrieval.js",
   "src/lib/drafts.js",
   "src/lib/editLearning.js",
+  "src/lib/exportBundle.js",
   "public/index.html",
   "public/app.js",
   "public/styles.css"
