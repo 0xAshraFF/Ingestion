@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Local Document Ingestion</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div>
+          <p class="eyebrow">Local-first</p>
+          <h1>Document Ingestion</h1>
+        </div>
+        <nav class="steps" aria-label="Workflow">
+          <a href="#upload">Upload</a>
+          <a href="#quality">Quality</a>
+          <a href="#extraction">Extraction</a>
+          <a href="#draft">Draft</a>
+          <a href="#settings">BYOK</a>
+        </nav>
+      </aside>
+
+      <main>
+        <section id="upload" class="workspace-band">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Step 1</p>
+              <h2>Upload and Normalize</h2>
+            </div>
+            <span id="status-pill" class="status-pill">Waiting for files</span>
+          </div>
+
+          <form id="upload-form" class="upload-surface">
+            <label class="drop-zone">
+              <input id="file-input" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.tif,.tiff,.docx,.txt,.md">
+              <span class="drop-title">Choose PDF, image, DOCX, TXT, or MD files</span>
+              <span id="file-list" class="drop-subtitle">No files selected</span>
+            </label>
+            <button type="submit">Run local intake</button>
+          </form>
+        </section>
+
+        <section id="quality" class="workspace-band">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Step 2</p>
+              <h2>Quality Dashboard</h2>
+            </div>
+            <button id="fallback-button" type="button" disabled>Run BYOK fallback</button>
+          </div>
+          <div id="quality-grid" class="metric-grid"></div>
+          <div id="page-quality" class="table-wrap"></div>
+        </section>
+
+        <section id="extraction" class="workspace-band split-band">
+          <div>
+            <p class="eyebrow">Step 3</p>
+            <h2>Structured Extraction</h2>
+            <div id="field-panel" class="field-list"></div>
+          </div>
+          <div>
+            <p class="eyebrow">Evidence</p>
+            <h2>Page Text</h2>
+            <div id="page-text" class="page-text"></div>
+          </div>
+        </section>
+
+        <section id="draft" class="workspace-band">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Step 4</p>
+              <h2>Grounded Draft</h2>
+            </div>
+            <div class="control-row">
+              <select id="draft-type" aria-label="Draft type">
+                <option>Case fact summary</option>
+                <option>Study note summary</option>
+                <option>Review summary</option>
+                <option>Notice-related summary</option>
+                <option>Document checklist</option>
+                <option>First-pass internal memo</option>
+              </select>
+              <button id="draft-button" type="button" disabled>Generate draft</button>
+            </div>
+          </div>
+          <textarea id="draft-output" spellcheck="true"></textarea>
+          <div class="edit-row">
+            <input id="edit-before" type="text" placeholder="Original sentence">
+            <input id="edit-after" type="text" placeholder="Reviewer edit">
+            <button id="edit-button" type="button" disabled>Capture edit</button>
+          </div>
+          <div id="edit-log" class="notice"></div>
+        </section>
+
+        <section id="settings" class="workspace-band">
+          <p class="eyebrow">Step 5</p>
+          <h2>Provider Settings</h2>
+          <div id="provider-panel" class="provider-grid"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js" type="module"></script>
+  </body>
+</html>

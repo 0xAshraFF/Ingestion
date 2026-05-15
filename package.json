@@ -1,0 +1,16 @@
+{
+  "name": "local-first-document-ingestion",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node src/server.js",
+    "start": "node src/server.js",
+    "test": "node --test",
+    "build": "node scripts/build-check.js",
+    "samples": "node scripts/build-samples.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

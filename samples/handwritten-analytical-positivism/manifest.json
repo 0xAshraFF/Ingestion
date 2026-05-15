@@ -1,0 +1,39 @@
+{
+  "name": "Handwritten Analytical Positivism Notes",
+  "description": "Five photographed handwritten jurisprudence pages used as messy document inputs for the document-understanding demo.",
+  "draftType": "Study note summary",
+  "sourceType": "handwritten_jpg_with_manual_ocr",
+  "privacy": "Visible personal identifying text from page 1 image was omitted from transcripts and outputs.",
+  "pages": [
+    {
+      "page": 1,
+      "image": "images/page-01-analytical-positivism.jpg",
+      "transcript": "transcripts/page-01-analytical-positivism.md",
+      "topic": "Analytical positivism and John Austin"
+    },
+    {
+      "page": 2,
+      "image": "images/page-02-austin-positive-law.jpg",
+      "transcript": "transcripts/page-02-austin-positive-law.md",
+      "topic": "Austin, positive law, positive morality, and Bentham"
+    },
+    {
+      "page": 3,
+      "image": "images/page-03-bentham-utilitarianism.jpg",
+      "transcript": "transcripts/page-03-bentham-utilitarianism.md",
+      "topic": "Bentham and utilitarianism"
+    },
+    {
+      "page": 4,
+      "image": "images/page-04-hart-rules.jpg",
+      "transcript": "transcripts/page-04-hart-rules.md",
+      "topic": "Hart and primary/secondary rules"
+    },
+    {
+      "page": 5,
+      "image": "images/page-05-kelsen-pure-theory.jpg",
+      "transcript": "transcripts/page-05-kelsen-pure-theory.md",
+      "topic": "Kelsen's Pure Theory of Law"
+    }
+  ]
+}

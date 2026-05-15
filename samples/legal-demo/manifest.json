@@ -1,0 +1,74 @@
+{
+  "name": "Legal Demo Sample Pack",
+  "description": "Mixed clean, noisy, handwritten, synthetic, and official legal-style documents for the grounded drafting demo.",
+  "draftType": "Case fact summary",
+  "sources": [
+    {
+      "name": "clear_notice.pdf",
+      "origin": "synthetic NY-style past-due-rent notice",
+      "url": "synthetic"
+    },
+    {
+      "name": "noisy_scan_notice.jpg",
+      "origin": "degraded scan generated from synthetic notice",
+      "url": "synthetic"
+    },
+    {
+      "name": "handwritten_operator_note.jpg",
+      "origin": "synthetic handwritten-style operator note",
+      "url": "synthetic"
+    },
+    {
+      "name": "debt_collection_letter.pdf",
+      "origin": "synthetic CFPB-style debt collection response letter",
+      "url": "https://www.consumerfinance.gov/ask-cfpb/what-should-i-do-when-a-debt-collectors-contacts-me-en-1695/"
+    },
+    {
+      "name": "civil_summons.pdf",
+      "origin": "official U.S. Courts AO 440 summons form",
+      "url": "https://www.uscourts.gov/sites/default/files/ao440.pdf"
+    }
+  ],
+  "documents": [
+    {
+      "sampleDoc": "clear_notice.pdf",
+      "path": "documents/clear_notice.pdf",
+      "text": "text/clear_notice.txt",
+      "type": "application/pdf",
+      "modelUsed": "local_pdf_text_extractor",
+      "expectedConfidence": 96
+    },
+    {
+      "sampleDoc": "noisy_scan_notice.jpg",
+      "path": "documents/noisy_scan_notice.jpg",
+      "text": "text/noisy_scan_notice.txt",
+      "type": "image/jpeg",
+      "modelUsed": "local_ocr_heuristic",
+      "expectedConfidence": 64
+    },
+    {
+      "sampleDoc": "handwritten_operator_note.jpg",
+      "path": "documents/handwritten_operator_note.jpg",
+      "text": "text/handwritten_operator_note.txt",
+      "type": "image/jpeg",
+      "modelUsed": "manual_transcript_adapter",
+      "expectedConfidence": 70
+    },
+    {
+      "sampleDoc": "debt_collection_letter.pdf",
+      "path": "documents/debt_collection_letter.pdf",
+      "text": "text/debt_collection_letter.txt",
+      "type": "application/pdf",
+      "modelUsed": "local_pdf_text_extractor",
+      "expectedConfidence": 96
+    },
+    {
+      "sampleDoc": "civil_summons.pdf",
+      "path": "documents/civil_summons.pdf",
+      "text": "text/civil_summons.txt",
+      "type": "application/pdf",
+      "modelUsed": "local_pdf_text_extractor",
+      "expectedConfidence": 94
+    }
+  ]
+}

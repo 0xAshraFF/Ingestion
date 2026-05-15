@@ -1,0 +1,67 @@
+import { readFile, writeFile } from "node:fs/promises";
+import { join } from "node:path";
+import { ingestDocument } from "../src/lib/intake.js";
+import { chunkDocument } from "../src/lib/retrieval.js";
+import { generateDraft } from "../src/lib/drafts.js";
+import { aggregateQuality } from "../src/lib/quality.js";
+
+const sampleDir = "samples/handwritten-analytical-positivism";
+const manifest = JSON.parse(await readFile(join(sampleDir, "manifest.json"), "utf8"));
+
+const files = await Promise.all(manifest.pages.map(async (page) => {
+  const transcript = await readFile(join(sampleDir, page.transcript), "utf8");
+  return {
+    name: page.image,
+    type: "image/jpeg",
+    size: transcript.length,
+    ocrText: transcript
+  };
+}));
+
+const document = ingestDocument({ files });
+const chunks = chunkDocument(document);
+const draft = generateDraft({
+  document,
+  chunks,
+  type: manifest.draftType,
+  lessons: [
+    {
+      reusableLesson: "For study notes, group the draft by jurist and concept, then call out unclear handwriting separately."
+    }
+  ]
+});
+const quality = aggregateQuality(document.pages.map((page) => page.metric));
+
+const report = `# Handwritten Sample Build Report
+
+Sample: ${manifest.name}
+
+## Input Files
+
+${manifest.pages.map((page) => `- Page ${page.page}: ${page.image} - ${page.topic}`).join("\n")}
+
+## Quality Result
+
+- Overall quality band: ${quality.band}
+- Average OCR confidence: ${quality.averageConfidence}%
+- Pages processed: ${document.pages.length}
+- Citations generated: ${draft.citations.length}
+- Unsupported warnings: ${draft.unsupported.length}
+
+## Generated Draft
+
+${draft.content}
+`;
+
+await writeFile(join(sampleDir, "outputs/generated-study-note-summary.md"), draft.content);
+await writeFile(join(sampleDir, "outputs/evaluation-report.md"), report);
+
+console.log(JSON.stringify({
+  sample: manifest.name,
+  qualityBand: quality.band,
+  averageConfidence: quality.averageConfidence,
+  pages: document.pages.length,
+  citations: draft.citations.length,
+  generated: `${sampleDir}/outputs/generated-study-note-summary.md`,
+  report: `${sampleDir}/outputs/evaluation-report.md`
+}, null, 2));
