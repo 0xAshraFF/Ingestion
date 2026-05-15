@@ -1,4 +1,4 @@
-sample_doc,model_used,confidence_metric,accuracy_proxy,quality_band,fallback_used
+input_doc,model_used,confidence_metric,accuracy_proxy,quality_band,fallback_used
 clear_notice.pdf,local_pdf_text_extractor,87%,87%,amber,no
 noisy_scan_notice.jpg,local_ocr_heuristic,52%,52%,red,no
 handwritten_operator_note.jpg,manual_transcript_adapter,52%,52%,red,no

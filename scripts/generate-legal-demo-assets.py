@@ -10,7 +10,7 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, Tabl
 from reportlab.lib import colors
 
 
-ROOT = Path("samples/legal-demo")
+ROOT = Path("inputs/legal-demo")
 DOCS = ROOT / "documents"
 TEXT = ROOT / "text"
 DOCS.mkdir(parents=True, exist_ok=True)
@@ -168,4 +168,4 @@ if not summons_text:
 A lawsuit has been filed against you. Within 21 days after service of this summons you must serve on the plaintiff an answer or motion under Rule 12 of the Federal Rules of Civil Procedure."""
 (TEXT / "civil_summons.txt").write_text(summons_text, encoding="utf-8")
 
-print("Generated legal demo assets in samples/legal-demo")
+print("Generated legal demo input assets in inputs/legal-demo")

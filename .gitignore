@@ -1,4 +1,8 @@
 node_modules/
 data/
 .env
+.env.*
+!.env.example
+env/*
+!env/README.md
 .DS_Store

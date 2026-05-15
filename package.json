@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "test": "node --test",
     "build": "node scripts/build-check.js",
+    "results": "node scripts/build-samples.js",
     "samples": "node scripts/build-samples.js"
   },
   "engines": {
